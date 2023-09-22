@@ -1,0 +1,25 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    restart: always
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - 5432:5432
+    volumes:
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: transactions_db
+  backend:
+    build: .
+    container_name: app
+    ports: 
+      - "8080:8080"
+    volumes:
+      - ./:/go/src

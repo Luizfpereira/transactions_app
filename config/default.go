@@ -9,6 +9,7 @@ type Config struct {
 	Port string `mapstructure:"PORT"`
 }
 
+// LoadConfig return a Config struct populated by env variables using Viper
 func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigType("env")
