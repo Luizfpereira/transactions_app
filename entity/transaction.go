@@ -16,9 +16,18 @@ type Transaction struct {
 }
 
 type TransactionInput struct {
-	Description     string    `json:"description" binding:"required,max=50"`
-	TransactionDate time.Time `json:"transaction_date" binding:"required"`
-	PurchaseAmount  string    `json:"purchase_amount" binding:"required"`
+	Description     string          `json:"description" binding:"required,max=50"`
+	TransactionDate time.Time       `json:"transaction_date" binding:"required"`
+	PurchaseAmount  decimal.Decimal `json:"purchase_amount" binding:"required"`
+}
+
+type TransactionConvertedOutput struct {
+	Id              int             `json:"id"`
+	Description     string          `json:"description"`
+	TransactionDate time.Time       `json:"transaction_date"`
+	PurchaseAmount  decimal.Decimal `json:"purchase_amount"`
+	ExchangeRate    decimal.Decimal `json:"exchange_rate"`
+	ConvertedAmount decimal.Decimal `json:"converted_amount"`
 }
 
 // NewTransaction validates and creates a new transaction instance

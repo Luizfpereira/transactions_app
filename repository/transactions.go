@@ -15,5 +15,18 @@ func NewTransactionRepositoryPsql(instance *gorm.DB) *TransactionRepositoryPsql 
 }
 
 func (t *TransactionRepositoryPsql) Create(transaction *entity.Transaction) (*entity.Transaction, error) {
-	return nil, nil
+	res := t.Instance.Create(&transaction)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return transaction, nil
+}
+
+func (t *TransactionRepositoryPsql) GetTransactions() ([]entity.Transaction, error) {
+	var transactionSlice []entity.Transaction
+	res := t.Instance.Find(&transactionSlice)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return transactionSlice, nil
 }

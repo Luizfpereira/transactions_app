@@ -14,5 +14,6 @@ func InitializeRouter(transactionHandler *handlers.TransactionHandler) *gin.Engi
 
 	transactions := router.Group("/transactions")
 	transactions.POST("/create", transactionHandler.Create)
+	transactions.GET("/", transactionHandler.GetTransactionsCurrency)
 	return router
 }

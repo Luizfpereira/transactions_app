@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 	"transactions_app/config"
+	"transactions_app/entity"
 	"transactions_app/usecase"
 
 	"github.com/gin-gonic/gin"
@@ -42,18 +42,35 @@ func (t *TransactionHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": fmt.Sprintf("failed parsing date: %s", err.Error())})
 		return
 	}
-	log.Println(date)
 
 	value, err := decimal.NewFromString(purchaseAmount)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": err.Error()})
 		return
 	}
-	truncatedValue := value.Truncate(2)
+	truncatedValue := value.Round(2)
 
 	if truncatedValue.LessThanOrEqual(decimal.New(0, 0)) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": "purchase value must be greater than 0"})
 		return
 	}
+
+	input := entity.TransactionInput{
+		Description:     description,
+		TransactionDate: date.UTC(),
+		PurchaseAmount:  truncatedValue,
+	}
+
+	output, err := t.Usecase.CreateTransaction(input)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "failed", "error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "transaction": output})
+}
+
+func (t *TransactionHandler) GetTransactionsCurrency(ctx *gin.Context) {
+	output, _ := t.Usecase.GetTransactionsCurrency("teste")
+	ctx.JSON(http.StatusOK, output)
 
 }
