@@ -66,11 +66,16 @@ func (t *TransactionHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "failed", "error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"status": "success", "transaction": output})
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": output})
 }
 
 func (t *TransactionHandler) GetTransactionsCurrency(ctx *gin.Context) {
-	output, _ := t.Usecase.GetTransactionsCurrency("teste")
-	ctx.JSON(http.StatusOK, output)
+	currency := ctx.Query("currency")
+	output, err := t.Usecase.GetTransactionsCurrency(currency)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "failed", "error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": output})
 
 }

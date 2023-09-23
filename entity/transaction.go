@@ -22,12 +22,13 @@ type TransactionInput struct {
 }
 
 type TransactionConvertedOutput struct {
-	Id              int             `json:"id"`
-	Description     string          `json:"description"`
-	TransactionDate time.Time       `json:"transaction_date"`
-	PurchaseAmount  decimal.Decimal `json:"purchase_amount"`
-	ExchangeRate    decimal.Decimal `json:"exchange_rate"`
-	ConvertedAmount decimal.Decimal `json:"converted_amount"`
+	Id              int              `json:"id,omitempty"`
+	Description     string           `json:"description,omitempty"`
+	TransactionDate time.Time        `json:"transaction_date,omitempty"`
+	PurchaseAmount  decimal.Decimal  `json:"purchase_amount,omitempty"`
+	ExchangeRate    *decimal.Decimal `json:"exchange_rate,omitempty"`
+	ConvertedAmount *decimal.Decimal `json:"converted_amount,omitempty"`
+	Error           *string          `json:"error,omitempty"`
 }
 
 // NewTransaction validates and creates a new transaction instance
