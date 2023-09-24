@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"sync"
 	"time"
 	"transactions_app/entity"
 	"transactions_app/gateway"
@@ -34,7 +34,6 @@ func (t *TransactionUsecase) CreateTransaction(input entity.TransactionInput) (*
 }
 
 // GetTransactionByID
-// GetTransactionsCurrency or currencies in plural
 
 func (t *TransactionUsecase) GetTransactionsCurrency(currency string) ([]entity.TransactionConvertedOutput, error) {
 	transactions, err := t.gateway.GetTransactions()
@@ -46,29 +45,75 @@ func (t *TransactionUsecase) GetTransactionsCurrency(currency string) ([]entity.
 		return nil, errors.New("no transactions registered")
 	}
 
-	var transactionsOutput []entity.TransactionConvertedOutput
-	for _, transaction := range transactions {
-		output := entity.TransactionConvertedOutput{
-			Id:              int(transaction.ID),
-			Description:     transaction.Description,
-			TransactionDate: transaction.TransactionDate,
-			PurchaseAmount:  transaction.PurchaseAmount,
-		}
-		if currency != "" {
-			treasuryFiscalData, err := getExchangeRates(currency, output.TransactionDate)
-			if err != nil || len(treasuryFiscalData) == 0 {
-				errStr := "purchase cannot be converted to target currency"
-				output.Error = &errStr
-			} else {
-				convertedAmount := output.PurchaseAmount.Mul(treasuryFiscalData[0].ExchageRate)
-				output.ConvertedAmount = &convertedAmount
-				output.ExchangeRate = &treasuryFiscalData[0].ExchageRate
-			}
-
-		}
-		transactionsOutput = append(transactionsOutput, output)
+	type Output struct {
+		TransactionConverted *entity.TransactionConvertedOutput
+		Error                error
 	}
 
+	// poolSize refers to the number of goroutines that could be created at the same time. This number is limited so the app
+	// would not run out of memory resources in case they were created accordingly to a large number of transactions
+	// existing in the database
+	poolSize := 10
+	queue := make(chan entity.Transaction)
+	output := make(chan Output)
+
+	var wg sync.WaitGroup
+	wg.Add(len(transactions))
+
+	go func(queue chan<- entity.Transaction) {
+		for _, transaction := range transactions {
+			queue <- transaction
+		}
+		close(queue)
+	}(queue)
+
+	for i := 0; i < poolSize; i++ {
+		go func(queue <-chan entity.Transaction, output chan<- Output) {
+			for t := range queue {
+				defer wg.Done()
+				var out Output
+				converted := entity.TransactionConvertedOutput{
+					Id:              int(t.ID),
+					Description:     t.Description,
+					TransactionDate: t.TransactionDate,
+					PurchaseAmount:  t.PurchaseAmount,
+				}
+				out.TransactionConverted = &converted
+				if currency != "" {
+					treasuryFiscalData, err := getExchangeRates(currency, t.TransactionDate)
+					if err != nil {
+						out.Error = err
+						output <- out
+						return
+					} else if len(treasuryFiscalData) == 0 {
+						errStr := "purchase cannot be converted to target currency"
+						converted.Error = &errStr
+					} else {
+						convertedAmount := t.PurchaseAmount.Mul(treasuryFiscalData[0].ExchageRate)
+						converted.ConvertedAmount = &convertedAmount
+						converted.ExchangeRate = &treasuryFiscalData[0].ExchageRate
+					}
+				}
+				output <- out
+			}
+		}(queue, output)
+	}
+
+	go func() {
+		wg.Wait()
+		close(output)
+	}()
+
+	var transactionsOutput []entity.TransactionConvertedOutput
+	for t := range output {
+		if t.Error != nil {
+			err = t.Error
+		}
+		transactionsOutput = append(transactionsOutput, *t.TransactionConverted)
+	}
+	if err != nil {
+		return nil, err
+	}
 	return transactionsOutput, nil
 }
 
@@ -91,7 +136,7 @@ func getExchangeRates(currency string, transactionDate time.Time) ([]entity.Trea
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
+		return nil, errors.New("currency could not be retrieved")
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
