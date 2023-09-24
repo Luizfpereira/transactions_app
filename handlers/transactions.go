@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 	"transactions_app/config"
 	"transactions_app/entity"
@@ -77,5 +78,19 @@ func (t *TransactionHandler) GetTransactionsCurrency(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": output})
+}
 
+func (t *TransactionHandler) GetTransactionByIdCurrency(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "message": "wrong id value - should be an integer"})
+		return
+	}
+	currency := ctx.Query("currency")
+	output, err := t.Usecase.GetTransactionByIdCurrency(currency, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "failed", "error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": output})
 }

@@ -33,6 +33,34 @@ func (t *TransactionUsecase) CreateTransaction(input entity.TransactionInput) (*
 	return transactionOutput, nil
 }
 
+func (t *TransactionUsecase) GetTransactionByIdCurrency(currency string, id int) (*entity.TransactionConvertedOutput, error) {
+	transaction, err := t.gateway.GetTransactionById(id)
+	if err != nil {
+		return nil, err
+	}
+	converted := &entity.TransactionConvertedOutput{
+		Id:              int(transaction.ID),
+		Description:     transaction.Description,
+		TransactionDate: transaction.TransactionDate,
+		PurchaseAmount:  transaction.PurchaseAmount,
+	}
+
+	if currency != "" {
+		treasuryFiscalData, err := getExchangeRates(currency, transaction.TransactionDate)
+		if err != nil {
+			return nil, err
+		}
+		if len(treasuryFiscalData) == 0 {
+			return nil, errors.New("purchase cannot be converted to target currency")
+		}
+		convertedAmount := transaction.PurchaseAmount.Mul(treasuryFiscalData[0].ExchageRate).Round(2)
+		converted.ConvertedAmount = &convertedAmount
+		converted.ExchangeRate = &treasuryFiscalData[0].ExchageRate
+	}
+
+	return converted, nil
+}
+
 // GetTransactionByID
 
 func (t *TransactionUsecase) GetTransactionsCurrency(currency string) ([]entity.TransactionConvertedOutput, error) {
@@ -89,7 +117,7 @@ func (t *TransactionUsecase) GetTransactionsCurrency(currency string) ([]entity.
 						errStr := "purchase cannot be converted to target currency"
 						converted.Error = &errStr
 					} else {
-						convertedAmount := t.PurchaseAmount.Mul(treasuryFiscalData[0].ExchageRate)
+						convertedAmount := t.PurchaseAmount.Mul(treasuryFiscalData[0].ExchageRate).Round(2)
 						converted.ConvertedAmount = &convertedAmount
 						converted.ExchangeRate = &treasuryFiscalData[0].ExchageRate
 					}

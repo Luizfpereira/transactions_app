@@ -53,9 +53,5 @@ func (t *Transaction) Validate() error {
 	if t.Description == "" {
 		return errors.New("description is empty")
 	}
-
-	// if t.PurchaseAmount == 0 {
-	// 	return errors.New("purchase amount is zero")
-	// }
 	return nil
 }

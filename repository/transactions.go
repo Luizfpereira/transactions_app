@@ -30,3 +30,12 @@ func (t *TransactionRepositoryPsql) GetTransactions() ([]entity.Transaction, err
 	}
 	return transactionSlice, nil
 }
+
+func (t *TransactionRepositoryPsql) GetTransactionById(id int) (*entity.Transaction, error) {
+	var transaction *entity.Transaction
+	res := t.Instance.First(&transaction, id)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return transaction, nil
+}
