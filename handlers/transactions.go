@@ -51,10 +51,10 @@ func (t *TransactionHandler) Create(ctx *gin.Context) {
 	}
 	truncatedValue := value.Round(2)
 
-	if truncatedValue.LessThanOrEqual(decimal.New(0, 0)) {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": "purchase value must be greater than 0"})
-		return
-	}
+	// if truncatedValue.LessThanOrEqual(decimal.New(0, 0)) {
+	// 	ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": "purchase value must be greater than 0"})
+	// 	return
+	// }
 
 	input := entity.TransactionInput{
 		Description:     description,
