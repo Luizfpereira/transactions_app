@@ -36,7 +36,7 @@ func (t *TransactionUsecase) CreateTransaction(input entity.TransactionInput) (*
 func (t *TransactionUsecase) GetTransactionByIdCurrency(currency string, id int) (*entity.TransactionConvertedOutput, error) {
 	transaction, err := t.gateway.GetTransactionById(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("id not registered")
 	}
 	converted := &entity.TransactionConvertedOutput{
 		Id:              int(transaction.ID),
