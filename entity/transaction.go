@@ -53,5 +53,9 @@ func (t *Transaction) Validate() error {
 	if t.Description == "" {
 		return errors.New("description is empty")
 	}
+
+	if len(t.Description) > 50 {
+		return errors.New("description max length: 50")
+	}
 	return nil
 }

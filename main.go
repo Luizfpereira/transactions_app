@@ -9,6 +9,8 @@ import (
 	"transactions_app/router"
 	"transactions_app/server"
 	"transactions_app/usecase"
+
+	"gorm.io/driver/postgres"
 )
 
 func main() {
@@ -18,7 +20,7 @@ func main() {
 		log.Fatalf("could not load config: %v", err)
 	}
 
-	instance := database.ConnectSingleton(config.PostgresConn)
+	instance := database.ConnectSingleton(postgres.Open(config.PostgresConn))
 	database.Migrate(instance)
 
 	transactionRepo := repository.NewTransactionRepositoryPsql(instance)

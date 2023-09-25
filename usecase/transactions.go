@@ -61,8 +61,6 @@ func (t *TransactionUsecase) GetTransactionByIdCurrency(currency string, id int)
 	return converted, nil
 }
 
-// GetTransactionByID
-
 func (t *TransactionUsecase) GetTransactionsCurrency(currency string) ([]entity.TransactionConvertedOutput, error) {
 	transactions, err := t.gateway.GetTransactions()
 	if err != nil {
