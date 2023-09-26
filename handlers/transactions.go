@@ -89,6 +89,10 @@ func (t *TransactionHandler) GetTransactionByIdCurrency(ctx *gin.Context) {
 	currency := ctx.Query("currency")
 	output, err := t.Usecase.GetTransactionByIdCurrency(currency, id)
 	if err != nil {
+		if err.Error() == "id not registered" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": err.Error()})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "failed", "error": err.Error()})
 		return
 	}
