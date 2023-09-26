@@ -9,8 +9,8 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["tail", "-f", "/dev/null"]
-# CMD ["go", "run", "main.go"]
+# CMD ["tail", "-f", "/dev/null"]
+CMD ["go", "run", "main.go"]
 
 
 
